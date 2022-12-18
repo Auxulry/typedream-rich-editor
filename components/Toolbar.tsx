@@ -1,7 +1,7 @@
-import { FormatBold, FormatItalic, FormatUnderlined } from '@mui/icons-material';
+import { Code, FormatBold, FormatItalic, FormatQuote, FormatUnderlined } from '@mui/icons-material';
 import React from 'react';
 import { useSlate } from 'slate-react';
-import { isMarkActive, Mark, toggleMark } from '../utils/richEditor';
+import { Block, isBlockActive, isMarkActive, Mark, toggleBlock, toggleMark } from '../utils/richEditor';
 import { ToolbarIconStyled, ToolbarStyled } from './richEditorStyled';
 
 type TMarkOptions = {
@@ -9,17 +9,26 @@ type TMarkOptions = {
   icon: JSX.Element
 }
 
+type TBlockOptions = {
+  block: Block,
+  icon: JSX.Element
+}
+
 export default function Toolbar() {
   const editor = useSlate();
-  const mark: TMarkOptions[] = [
-    { mark: 'bold', icon: <FormatBold />, },
+  const marks: TMarkOptions[] = [
+    { mark: 'bold', icon: <FormatBold /> },
     { mark: 'italic', icon: <FormatItalic /> },
     { mark: 'underline', icon: <FormatUnderlined /> }
+  ];
+  const blocks: TBlockOptions[] = [
+    { block: 'code', icon: <Code /> },
+    { block: 'quote', icon: <FormatQuote /> }
   ];
   return (
     <ToolbarStyled elevation={0}>
       {
-        mark.map((item, key) => (
+        marks.map((item, key) => (
           <ToolbarIconStyled
             className={isMarkActive(editor, item.mark) ? 'active' : 'disactive'}
             onMouseDown={event => {
@@ -32,15 +41,20 @@ export default function Toolbar() {
           </ToolbarIconStyled>
         ))
       }
-      {/* <ToolbarIconStyled
-        className={CustomEditor.isCodeBlockActive(editor) ? 'active' : 'disactive'}
-        onMouseDown={event => {
-          event.preventDefault();
-          CustomEditor.toggleCodeBlock(editor);
-        }}
-      >
-        <Code />
-      </ToolbarIconStyled> */}
+      {
+        blocks.map((item, key) => (
+          <ToolbarIconStyled
+            className={isBlockActive(editor, item.block) ? 'active' : 'disactive'}
+            onMouseDown={event => {
+              event.preventDefault();
+              toggleBlock(editor, item.block);
+            }}
+            key={key}
+          >
+            {item.icon}
+          </ToolbarIconStyled>
+        ))
+      }
     </ToolbarStyled>
   );
 }

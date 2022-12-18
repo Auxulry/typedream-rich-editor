@@ -1,10 +1,11 @@
 import { KeyboardEvent } from 'react';
-import { Editor, Node, Text } from 'slate';
+import { Editor, Element, Node, Text, Transforms } from 'slate';
 
-export type Mark = 'bold' | 'italic' | 'underline'
+export type Mark = 'bold' | 'italic' | 'underline' | 'quote'
+export type Block = 'paragraph' | 'code' | 'quote'
 
 // Custom Text Types
-export type CustomText = { text: string; bold?: true, italic?: true, underline?: true }
+export type CustomText = { text: string; bold?: true, italic?: true, underline?: true, quote?: true }
 
 type TParagraph = {
   type: 'paragraph',
@@ -44,6 +45,9 @@ function checkMark(n: Node, mark: Mark): boolean {
     case 'underline':
       isActive = Text.isText(n) && n.underline === true;
       break;
+    case 'quote':
+      isActive = Text.isText(n) && n.quote === true;
+      break;
     default:
       break;
   }
@@ -81,6 +85,72 @@ export function toggleMark(editor: Editor, mark: Mark): void {
     Editor.removeMark(editor, mark);
   } else {
     Editor.addMark(editor, mark, true);
+  }
+}
+
+/**
+ *
+ * Function check if node has type
+ *
+ * @param n
+ * @param block
+ * @returns
+ */
+export function checkBlock(n: Node, block: Block): boolean {
+  let isActive = false;
+  switch (block) {
+    case 'paragraph':
+      isActive = Element.isElement(n) && n.type === 'paragraph';
+      break;
+    case 'code':
+      isActive = Element.isElement(n) && n.type === 'code';
+      break;
+    case 'quote':
+      isActive = Element.isElement(n) && n.type === 'quote';
+      break;
+    default:
+      break;
+  }
+
+  return isActive;
+}
+
+/**
+ *
+ * Function check if node has type active
+ *
+ * @param editor
+ * @param block
+ * @returns
+ */
+export function isBlockActive(editor: Editor, block: Block): boolean {
+  const [match] = Editor.nodes(editor, {
+    match: n => checkBlock(n, block)
+  });
+
+  return !!match;
+}
+
+
+/**
+ *
+ * Function Add Block
+ *
+ * @param editor
+ * @param block
+ */
+export function toggleBlock(editor: Editor, block: Block): void {
+  const isActive = isBlockActive(editor, block);
+  Transforms.setNodes(
+    editor,
+    { type: isActive ? undefined : block },
+    { match: n => Editor.isBlock(editor, n) }
+  );
+
+  if (isActive && block === 'quote') {
+    Editor.removeMark(editor, 'quote');
+  } else if (!isActive && block === 'quote') {
+    Editor.addMark(editor, 'quote', true);
   }
 }
 

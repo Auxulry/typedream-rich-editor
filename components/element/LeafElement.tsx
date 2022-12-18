@@ -15,7 +15,7 @@ export default function LeafElement({ attributes, children, leaf }: RenderLeafPr
     {...attributes}
     style={{
       fontWeight: leaf.bold ? 'bold' : 'normal',
-      fontStyle: leaf.italic ? 'italic' : 'normal',
+      fontStyle: leaf.italic || leaf.quote ? 'italic' : 'normal',
       textDecoration: leaf.underline ? 'underline' : 'normal'
     }}
   >
