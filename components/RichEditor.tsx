@@ -1,12 +1,12 @@
-import styled from '@emotion/styled';
-import { Paper } from '@mui/material';
 import React, { useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { BaseEditor, createEditor, Descendant } from 'slate';
-import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, withReact } from 'slate-react';
+import { ReactEditor, RenderElementProps, RenderLeafProps, Slate, withReact } from 'slate-react';
 import { CustomElement, CustomText, eventOnKeyDown } from '../utils/richEditor';
 import CodeElement from './element/CodeElement';
 import LeafElement from './element/LeafElement';
 import QuoteElement from './element/QuoteElement';
+import { ContentEditable, Wrapper } from './richEditorStyled';
 import Toolbar from './Toolbar';
 
 declare module 'slate' {
@@ -17,18 +17,30 @@ declare module 'slate' {
   }
 }
 
-const initialValue: Descendant[] = [
-  {
-    type: 'paragraph',
-    children: [{ text: 'A line of text in a paragraph.' }],
-  },
-];
-
 const DefaultElement = ({ attributes, children }: RenderElementProps) => {
   return <p {...attributes}>{children}</p>;
 };
 
-export default function RichEditor() {
+export interface IRichEditorChange {
+  target: {
+    name: string,
+    value: Descendant[]
+  }
+}
+
+interface IRichEditor {
+  name: string
+  value: Descendant[]
+  onChange: (_e: IRichEditorChange) => void
+}
+
+function RichEditor({
+  name,
+  value,
+  onChange
+}: IRichEditor) {
+  const [editor] = useState(() => withReact(createEditor()));
+
   const renderElement = useCallback((props: RenderElementProps) => {
     switch (props.element.type) {
       case 'code':
@@ -44,12 +56,32 @@ export default function RichEditor() {
     return <LeafElement {...props} />;
   }, []);
 
-  const [editor] = useState(() => withReact(createEditor()));
+
+  const convertParams = (value: Descendant[]): IRichEditorChange => {
+    const isAstChange = editor.operations.some(
+      op => 'set_selection' !== op.type
+    );
+    if (isAstChange) {
+      return {
+        target: {
+          name,
+          value
+        }
+      };
+    }
+    return {
+      target: {
+        name,
+        value: []
+      }
+    };
+  };
 
   return (
     <Slate
       editor={editor}
-      value={initialValue}
+      value={value}
+      onChange={(value) => onChange(convertParams(value))}
     >
       <Toolbar />
       <Wrapper>
@@ -63,10 +95,10 @@ export default function RichEditor() {
   );
 }
 
-const Wrapper = styled(Paper)`
-  padding: 1rem 2rem;
-`;
+RichEditor.propTypes = {
+  name: PropTypes.string.isRequired,
+  value: PropTypes.array.isRequired,
+  onChange: PropTypes.func.isRequired
+};
 
-const ContentEditable = styled(Editable)`
-  min-height: 400px;
-`;
+export default RichEditor;
